@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+
+<title>Slideshow</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: black;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.container {
+  position: fixed;
+  inset: 0;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0s;
+  will-change: opacity;
+  user-select: none;
+  -webkit-user-drag: none;
+  touch-action: none;
+}
+
+.slide.visible {
+  opacity: 1;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <img id="a" class="slide visible">
+  <img id="b" class="slide">
+</div>
+
+<script>
+/* -------- CONFIG -------- */
+
+const TOTAL_IMAGES = 100;
+const IMAGE_PREFIX = "images/thing";
+const IMAGE_SUFFIX = ".JPG";
+const INTERVAL = 200; // ms
+
+/* -------- STATE -------- */
+
+let images = [];
+let index = 0;
+let paused = false;
+let lastSwitch = performance.now();
+let useA = true;
+
+const imgA = document.getElementById("a");
+const imgB = document.getElementById("b");
+
+/* -------- PRELOAD -------- */
+
+let loaded = 0;
+
+for (let i = 1; i <= TOTAL_IMAGES; i++) {
+  const img = new Image();
+  img.src = IMAGE_PREFIX + i + IMAGE_SUFFIX;
+  img.onload = () => {
+    loaded++;
+    if (loaded === TOTAL_IMAGES) start();
+  };
+  images.push(img);
+}
+
+/* -------- START -------- */
+
+function start() {
+  imgA.src = images[0].src;
+  requestAnimationFrame(loop);
+}
+
+/* -------- LOOP -------- */
+
+function loop(now) {
+  if (!paused && now - lastSwitch >= INTERVAL) {
+    lastSwitch = now;
+
+    index = (index + 1) % images.length;
+
+    const incoming = useA ? imgB : imgA;
+    const outgoing = useA ? imgA : imgB;
+
+    incoming.src = images[index].src;
+    incoming.classList.add("visible");
+    outgoing.classList.remove("visible");
+
+    useA = !useA;
+  }
+
+  requestAnimationFrame(loop);
+}
+
+/* -------- INTERACTION -------- */
+
+document.addEventListener("pointerdown", () => paused = true);
+document.addEventListener("pointerup", () => paused = false);
+document.addEventListener("pointercancel", () => paused = false);
+document.addEventListener("contextmenu", e => e.preventDefault());
+</script>
+
+</body>
+</html>
